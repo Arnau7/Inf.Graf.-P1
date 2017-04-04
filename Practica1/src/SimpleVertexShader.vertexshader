@@ -6,9 +6,13 @@ out vec4 vertexColor;
 void main()
 {
     gl_Position.xyz = vertexPosition_modelspace;
-
+	
+	float y = (gl_Position.y - (-0.5))/(0.5 -(-0.5));
+	float x = (gl_Position.x - (-0.5))/(0.5 -(-0.5));
     gl_Position.w = 1.0;
-	float x = (gl_Position.y - (-0.5))/(0.5 -(-0.5));
-	vertexColor = vec4(0.0f,x,0.2,1.0f);
+	
+	
+	
+	vertexColor = vec4(0,1,y-0.1,1.0f);
 }
 
