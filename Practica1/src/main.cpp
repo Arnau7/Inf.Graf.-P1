@@ -23,9 +23,17 @@ float vertex1 = 0.5;
 float vertex2 = -0.5;
 float mixed;
 float mixed2;
+float gir;
 
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mode);
-
+mat4 matrix = {
+	1,0,0,0,
+	0,1,0,0,
+	0,0,1,0,
+	0,0,0,1
+};
+mat4 rotation = matrix;
+mat4 finalMatrix = matrix;
 Shader* shade;
 int main() {
 	//initGLFW
@@ -65,7 +73,8 @@ int main() {
 	glClearColor(1.0, 1.0, 0.8, 1.0);
 
 	//cargamos los shader
-	shade = new Shader("./src/textureVertex.vertexshader", "./src/textureFragment.fragmentshader");
+	//shade = new Shader("./src/textureVertex.vertexshader", "./src/textureFragment.fragmentshader");
+	shade = new Shader("./src/fovVertexShader.vertexshader", "./src/fovFragmentShader.fragmentshader");
 	//GLint variableShader = glGetUniformLocation(shade->Program, "shade");
 
 	GL_MAX_VERTEX_ATTRIBS;
@@ -121,15 +130,10 @@ int main() {
 		-0.5f, -0.5f, 0.0f,   0.0f, 0.0f, 1.0f,   0.0f, 0.0f, // Bottom Left
 		-0.5f,  0.5f, 0.0f,   1.0f, 1.0f, 0.0f,   0.0f, 1.0f  // Top Left 
 	};
-	mat4 matrix = {
-		1,0,0,0,
-		0,1,0,0,
-		0,0,1,0,
-		0,0,0,1
-	};
+
 	mat4 escaled = scale(matrix, vec3(0.5f, -0.5f, 0));
-	mat4 translated = translate(escaled, vec3(0.5f, 0.5f, 0));
-	mat4 rotated = rotate(translated, 90.0f, vec3(1.0f, 0.0f, 0.0f));
+	mat4 translated = translate(matrix, vec3(0.5f, 0.5f, 0));
+
 	// Definir el EBO
 	GLuint EBO;
 	// Crear los VBO, VAO y EBO
@@ -168,13 +172,36 @@ int main() {
 
 
 
+	float aspectRatio = WIDTH / HEIGHT;
+	float FOV = 60;
+	float nearPlane = 0.1f;
+	float farPlane = 100.f;
+	mat4 proj;
+	proj = perspective(radians(FOV), aspectRatio, nearPlane, farPlane);
+	proj = translate(proj, vec3(0, 0, -3.0f));
+
+	mat4 matrixFov;
+	matrixFov = rotate(matrixFov, radians(50.f), vec3(0, 0, 1));
+	matrixFov = translate(matrixFov, vec3(0, -0.5f, 0));
+
+	finalMatrix = proj * matrixFov;
+	GLint variableFov = glGetUniformLocation(shade->Program, "finalMatrix");
+	glUniformMatrix4fv(variableFov, 1, GL_FALSE, value_ptr(finalMatrix));
 
 	//bucle de dibujado
 	while (!glfwWindowShouldClose(window))
 	{
 
-
 		glClear(GL_COLOR_BUFFER_BIT);
+
+	
+
+		GLint variableRot = glGetUniformLocation(shade->Program, "rotation");
+		glUniformMatrix4fv(variableRot, 1, GL_FALSE, value_ptr(rotation));
+		GLint variableTrans = glGetUniformLocation(shade->Program, "translation");
+		glUniformMatrix4fv(variableTrans, 1, GL_FALSE, value_ptr(translated));
+		GLint variableScale = glGetUniformLocation(shade->Program, "scalar");
+		glUniformMatrix4fv(variableScale, 1, GL_FALSE, value_ptr(escaled));
 
 		//definir la matriz de proyeccion
 		glMatrixMode(GL_PROJECTION);
@@ -204,10 +231,6 @@ int main() {
 		glActiveTexture(GL_TEXTURE1);
 		glBindTexture(GL_TEXTURE_2D, texture2);
 		glUniform1i(glGetUniformLocation(shade->Program, "Texture2"), 1);
-
-		GLint variableMatrix = glGetUniformLocation(shade->Program, "matrix");
-		glUniformMatrix4fv(variableMatrix, 1, GL_FALSE, value_ptr(rotated));
-
 
 		/*glBindTexture(GL_TEXTURE_2D, texture);
 		glBindTexture(GL_TEXTURE_2D, texture2);*/
@@ -262,12 +285,20 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 	}
 	if (key == GLFW_KEY_LEFT) 
 	{
+		gir += 0.1;
+		rotation = rotate(matrix, gir, vec3(0.0f, 0.0f, 1.0f));
 
+		GLint variableRot = glGetUniformLocation(shade->Program, "rotation");
+		glUniformMatrix4fv(variableRot, 1, GL_FALSE, value_ptr(rotation));
 	}
 
 	else if(key == GLFW_KEY_RIGHT)
 	{
-	
+		gir -= 0.1;
+		rotation = rotate(matrix, gir, vec3(0.0f, 0.0f, 1.0f));
+
+		GLint variableRot = glGetUniformLocation(shade->Program, "rotation");
+		glUniformMatrix4fv(variableRot, 1, GL_FALSE, value_ptr(rotation));
 	}
 }
 
