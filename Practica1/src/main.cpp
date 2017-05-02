@@ -34,6 +34,10 @@ mat4 matrix = {
 };
 mat4 rotation = matrix;
 mat4 finalMatrix = matrix;
+mat4 proj;
+mat4 vision;
+mat4 model;
+
 Shader* shade;
 int main() {
 	//initGLFW
@@ -130,6 +134,62 @@ int main() {
 		-0.5f, -0.5f, 0.0f,   0.0f, 0.0f, 1.0f,   0.0f, 0.0f, // Bottom Left
 		-0.5f,  0.5f, 0.0f,   1.0f, 1.0f, 0.0f,   0.0f, 1.0f  // Top Left 
 	};
+	GLfloat VertexBufferCube[] = {
+		-0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
+		0.5f , -0.5f, -0.5f,  1.0f, 0.0f,
+		0.5f ,  0.5f, -0.5f,  1.0f, 1.0f,
+		0.5f ,  0.5f, -0.5f,  1.0f, 1.0f,
+		-0.5f,  0.5f, -0.5f,  0.0f, 1.0f,
+		-0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
+
+		-0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+		0.5f , -0.5f,  0.5f,  1.0f, 0.0f,
+		0.5f ,  0.5f,  0.5f,  1.0f, 1.0f,
+		0.5f ,  0.5f,  0.5f,  1.0f, 1.0f,
+		-0.5f,  0.5f,  0.5f,  0.0f, 1.0f,
+		-0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+
+		-0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+		-0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+		-0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+		-0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+		-0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+		-0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+
+		0.5f ,  0.5f,  0.5f,  1.0f, 0.0f,
+		0.5f ,  0.5f, -0.5f,  1.0f, 1.0f,
+		0.5f , -0.5f, -0.5f,  0.0f, 1.0f,
+		0.5f , -0.5f, -0.5f,  0.0f, 1.0f,
+		0.5f , -0.5f,  0.5f,  0.0f, 0.0f,
+		0.5f ,  0.5f,  0.5f,  1.0f, 0.0f,
+
+		-0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+		0.5f , -0.5f, -0.5f,  1.0f, 1.0f,
+		0.5f , -0.5f,  0.5f,  1.0f, 0.0f,
+		0.5f , -0.5f,  0.5f,  1.0f, 0.0f,
+		-0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+		-0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+
+		-0.5f,  0.5f, -0.5f,  0.0f, 1.0f,
+		0.5f ,  0.5f, -0.5f,  1.0f, 1.0f,
+		0.5f ,  0.5f,  0.5f,  1.0f, 0.0f,
+		0.5f ,  0.5f,  0.5f,  1.0f, 0.0f,
+		-0.5f,  0.5f,  0.5f,  0.0f, 0.0f,
+		-0.5f,  0.5f, -0.5f,  0.0f, 1.0f
+	};
+
+	//vec3 CubesPositionBuffer[] = {
+	//	vec3(0.0f ,  0.0f,  0.0f),
+	//	vec3(2.0f ,  5.0f, -15.0f),
+	//	vec3(-1.5f, -2.2f, -2.5f),
+	//	vec3(-3.8f, -2.0f, -12.3f),
+	//	vec3(2.4f , -0.4f, -3.5f),
+	//	vec3(-1.7f,  3.0f, -7.5f),
+	//	vec3(1.3f , -2.0f, -2.5f),
+	//	vec3(1.5f ,  2.0f, -2.5f),
+	//	vec3(1.5f ,  0.2f, -1.5f),
+	//	vec3(-1.3f,  1.0f, -1.5f)
+	//};
 
 	mat4 escaled = scale(matrix, vec3(0.5f, -0.5f, 0));
 	mat4 translated = translate(matrix, vec3(0.5f, 0.5f, 0));
@@ -147,21 +207,21 @@ int main() {
 	glBindVertexArray(VAO);
 	//Declarar el VBO y el EBO
 	glBindBuffer(GL_ARRAY_BUFFER, VBO);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(VertexBufferCube), VertexBufferCube, GL_STATIC_DRAW);
 
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(Element), Element, GL_STATIC_DRAW);
+	/*glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(CubesPositionBuffer), CubesPositionBuffer, GL_STATIC_DRAW);*/
 
 	//Enlazar el buffer con openGL
 
 
 
 	//Establecer las propiedades de los vertices
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(GLfloat), (GLvoid*)(0 * sizeof(GLfloat)));
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(GLfloat), (GLvoid*)(0 * sizeof(GLfloat)));
 	glEnableVertexAttribArray(0);
-	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(GLfloat), (GLvoid*)(3 * sizeof(GLfloat)));
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(GLfloat), (GLvoid*)(3 * sizeof(GLfloat)));
 	glEnableVertexAttribArray(1);
-	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(GLfloat), (GLvoid*)(6 * sizeof(GLfloat)));
+	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(GLfloat), (GLvoid*)(6 * sizeof(GLfloat)));
 	glEnableVertexAttribArray(2);
 	//liberar el buffer
 
@@ -176,37 +236,37 @@ int main() {
 	float FOV = 60;
 	float nearPlane = 0.1f;
 	float farPlane = 100.f;
-	mat4 proj;
+
+
 	proj = perspective(radians(FOV), aspectRatio, nearPlane, farPlane);
-	proj = translate(proj, vec3(0, 0, -3.0f));
 
-	mat4 matrixFov;
-	matrixFov = rotate(matrixFov, radians(50.f), vec3(0, 0, 1));
-	matrixFov = translate(matrixFov, vec3(0, -0.5f, 0));
+	vision = translate(vision, vec3(0, 0, -3.0f));
 
-	finalMatrix = proj * matrixFov;
-	GLint variableFov = glGetUniformLocation(shade->Program, "finalMatrix");
-	glUniformMatrix4fv(variableFov, 1, GL_FALSE, value_ptr(finalMatrix));
+	model = rotate(model, radians(50.0f), vec3(1.0f, 0.0f, 0.0f));
+	model = translate(model, vec3(0.0f, -0.5f, 0.0f));
+	model = scale(model, vec3(1.0f, 1.0f, 1.0f));
+
+	//finalMatrix = proj*vision*model;
+
+
+	glEnable(GL_DEPTH_TEST);
+	
 
 	//bucle de dibujado
 	while (!glfwWindowShouldClose(window))
 	{
 
-		glClear(GL_COLOR_BUFFER_BIT);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-	
+		finalMatrix = proj*vision*model;
 
-		GLint variableRot = glGetUniformLocation(shade->Program, "rotation");
-		glUniformMatrix4fv(variableRot, 1, GL_FALSE, value_ptr(rotation));
-		GLint variableTrans = glGetUniformLocation(shade->Program, "translation");
-		glUniformMatrix4fv(variableTrans, 1, GL_FALSE, value_ptr(translated));
-		GLint variableScale = glGetUniformLocation(shade->Program, "scalar");
-		glUniformMatrix4fv(variableScale, 1, GL_FALSE, value_ptr(escaled));
+		GLint variableFov = glGetUniformLocation(shade->Program, "finalMatrix");
+		glUniformMatrix4fv(variableFov, 1, GL_FALSE, value_ptr(finalMatrix));
 
 		//definir la matriz de proyeccion
 		glMatrixMode(GL_PROJECTION);
 		glLoadIdentity();
-		glOrtho(-10, 10, -10.f, 10.f, -1.0f, 10.f);
+		//glOrtho(-10, 10, -10.f, 10.f, -1.0f, 10.f);
 
 		glMatrixMode(GL_MODELVIEW);
 		glLoadIdentity();
@@ -227,7 +287,7 @@ int main() {
 
 		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, texture);
-		glUniform1i(glGetUniformLocation(shade->Program, "Texture1"), mixed);
+		glUniform1i(glGetUniformLocation(shade->Program, "Texture1"), 0);
 		glActiveTexture(GL_TEXTURE1);
 		glBindTexture(GL_TEXTURE_2D, texture2);
 		glUniform1i(glGetUniformLocation(shade->Program, "Texture2"), 1);
@@ -236,7 +296,8 @@ int main() {
 		glBindTexture(GL_TEXTURE_2D, texture2);*/
 		shade->USE();
 		glBindVertexArray(VAO);
-		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+		glDrawArrays(GL_TRIANGLES, 0,36);
 		//glBindVertexArray(0);
 
 
@@ -274,6 +335,11 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 			mixed = 1;
 		GLfloat variableShader = glGetUniformLocation(shade->Program, "mixed");
 		glUniform1f(variableShader, mixed);
+
+		model = rotate(model, radians(5.0f), vec3(1.0f, 0.0f, 0.0f));
+		finalMatrix = proj * vision *model;
+		GLint variableRot = glGetUniformLocation(shade->Program, "finalMatrix");
+		glUniformMatrix4fv(variableRot, 1, GL_FALSE, value_ptr(finalMatrix));
 	}
 	else if (key == GLFW_KEY_DOWN)
 	{
@@ -282,23 +348,28 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 			mixed = 0;
 		GLfloat variableShader = glGetUniformLocation(shade->Program, "mixed");
 		glUniform1f(variableShader, mixed);
+
+		model = rotate(model, radians(-5.0f), vec3(1.0f, 0.0f, 0.0f));
+		finalMatrix = proj * vision *model;
+		GLint variableRot = glGetUniformLocation(shade->Program, "finalMatrix");
+		glUniformMatrix4fv(variableRot, 1, GL_FALSE, value_ptr(finalMatrix));
 	}
 	if (key == GLFW_KEY_LEFT) 
 	{
-		gir += 0.1;
-		rotation = rotate(matrix, gir, vec3(0.0f, 0.0f, 1.0f));
-
-		GLint variableRot = glGetUniformLocation(shade->Program, "rotation");
-		glUniformMatrix4fv(variableRot, 1, GL_FALSE, value_ptr(rotation));
+		//gir += radians(1.0f);
+		model = rotate(model, radians(5.0f), vec3(0.0f, 0.0f, 1.0f));
+		finalMatrix = proj * vision *model;
+		GLint variableRot = glGetUniformLocation(shade->Program, "finalMatrix");
+		glUniformMatrix4fv(variableRot, 1, GL_FALSE, value_ptr(finalMatrix));
 	}
 
 	else if(key == GLFW_KEY_RIGHT)
 	{
-		gir -= 0.1;
-		rotation = rotate(matrix, gir, vec3(0.0f, 0.0f, 1.0f));
-
-		GLint variableRot = glGetUniformLocation(shade->Program, "rotation");
-		glUniformMatrix4fv(variableRot, 1, GL_FALSE, value_ptr(rotation));
+		//gir += radians(1.0f);
+		model = rotate(model, radians(-5.0f), vec3(0.0f, 0.0f, 1.0f));
+		finalMatrix = proj * vision *model;
+		GLint variableRot = glGetUniformLocation(shade->Program, "finalMatrix");
+		glUniformMatrix4fv(variableRot, 1, GL_FALSE, value_ptr(finalMatrix));
 	}
 }
 

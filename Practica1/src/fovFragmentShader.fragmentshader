@@ -1,22 +1,13 @@
 #version 330 core
+in vec2 TexCoord;
+out vec4 color;
+uniform sampler2D Texture1;
+uniform sampler2D Texture2;
+uniform float mixed;
 
-// Input vertex data, different for all executions of this shader.
-layout (location = 0) in vec3 position;
-layout (location = 1) in vec3 color;
-layout (location = 2) in vec2 texCoord;
 
-uniform mat4 finalMatrix;
 
-out vec4 vertexColor;
-out vec2 TexCoord;
-void main()
-{
-    TexCoord = texCoord;
-	
-
-	gl_Position = finalMatrix * vec4(position,1);
-	
-	
-	vertexColor = vec4(0,1,0.1,1.0f);
+void main(){
+       color = mix(texture(Texture1, TexCoord), texture(Texture2, TexCoord), mixed);
+	   
 }
-

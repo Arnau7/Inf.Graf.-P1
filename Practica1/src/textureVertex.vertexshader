@@ -15,7 +15,7 @@ void main()
     TexCoord = texCoord;
 	
 
-	gl_Position = scalar * translation * rotation * vec4(position,1);
+	gl_Position = translation * rotation * scale  * vec4(position,1);
 	
 	
 	vertexColor = vec4(0,1,0.1,1.0f);
