@@ -34,11 +34,20 @@ mat4 matrix = {
 };
 mat4 rotation = matrix;
 mat4 finalMatrix = matrix;
-mat4 proj;
+mat4 projection;
 mat4 vision;
 mat4 model;
+float angleX, angleY;
+
+vec3 cameraPosition = vec3(0.0f, 0.0f, 3.0f);
+vec3 cameraFront = vec3(0.0f, 0.0f, -1.0f);
+vec3 cameraUp;
+GLfloat dt;
+GLfloat lastFrame;
 
 Shader* shade;
+
+
 int main() {
 	//initGLFW
 	//TODO
@@ -178,18 +187,18 @@ int main() {
 		-0.5f,  0.5f, -0.5f,  0.0f, 1.0f
 	};
 
-	//vec3 CubesPositionBuffer[] = {
-	//	vec3(0.0f ,  0.0f,  0.0f),
-	//	vec3(2.0f ,  5.0f, -15.0f),
-	//	vec3(-1.5f, -2.2f, -2.5f),
-	//	vec3(-3.8f, -2.0f, -12.3f),
-	//	vec3(2.4f , -0.4f, -3.5f),
-	//	vec3(-1.7f,  3.0f, -7.5f),
-	//	vec3(1.3f , -2.0f, -2.5f),
-	//	vec3(1.5f ,  2.0f, -2.5f),
-	//	vec3(1.5f ,  0.2f, -1.5f),
-	//	vec3(-1.3f,  1.0f, -1.5f)
-	//};
+	vec3 CubesPositionBuffer[] = {
+		vec3(0.0f ,  0.0f,  0.0f),
+		vec3(2.0f ,  5.0f, -15.0f),
+		vec3(-1.5f, -2.2f, -2.5f),
+		vec3(-3.8f, -2.0f, -12.3f),
+		vec3(2.4f , -0.4f, -3.5f),
+		vec3(-1.7f,  3.0f, -7.5f),
+		vec3(1.3f , -2.0f, -2.5f),
+		vec3(1.5f ,  2.0f, -2.5f),
+		vec3(1.5f ,  0.2f, -1.5f),
+		vec3(-1.3f,  1.0f, -1.5f)
+	};
 
 	mat4 escaled = scale(matrix, vec3(0.5f, -0.5f, 0));
 	mat4 translated = translate(matrix, vec3(0.5f, 0.5f, 0));
@@ -219,7 +228,7 @@ int main() {
 	//Establecer las propiedades de los vertices
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(GLfloat), (GLvoid*)(0 * sizeof(GLfloat)));
 	glEnableVertexAttribArray(0);
-	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(GLfloat), (GLvoid*)(3 * sizeof(GLfloat)));
+	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(GLfloat), (GLvoid*)(3 * sizeof(GLfloat)));
 	glEnableVertexAttribArray(1);
 	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(GLfloat), (GLvoid*)(6 * sizeof(GLfloat)));
 	glEnableVertexAttribArray(2);
@@ -238,7 +247,7 @@ int main() {
 	float farPlane = 100.f;
 
 
-	proj = perspective(radians(FOV), aspectRatio, nearPlane, farPlane);
+	projection = perspective(radians(FOV), aspectRatio, nearPlane, farPlane);
 
 	vision = translate(vision, vec3(0, 0, -3.0f));
 
@@ -250,6 +259,11 @@ int main() {
 
 
 	glEnable(GL_DEPTH_TEST);
+
+	vec3 up = vec3(0.0f, 1.0f, 0.0f);
+	vec3 cameraDirection = normalize(cameraPosition - cameraFront);
+	vec3 cameraRight = normalize(cross(up, cameraFront));
+	cameraUp = cross(cameraDirection, cameraRight);
 	
 
 	//bucle de dibujado
@@ -258,11 +272,21 @@ int main() {
 
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-		finalMatrix = proj*vision*model;
+		GLfloat actualTime = glfwGetTime();
+		dt = actualTime - lastFrame;
+		lastFrame = actualTime;
 
-		GLint variableFov = glGetUniformLocation(shade->Program, "finalMatrix");
-		glUniformMatrix4fv(variableFov, 1, GL_FALSE, value_ptr(finalMatrix));
 
+		/*GLint variableFov = glGetUniformLocation(shade->Program, "model");
+		glUniformMatrix4fv(variableFov, 1, GL_FALSE, value_ptr(model));*/
+
+		GLint variableFov2 = glGetUniformLocation(shade->Program, "vision");
+		glUniformMatrix4fv(variableFov2, 1, GL_FALSE, value_ptr(vision));
+
+		GLint variableFov3 = glGetUniformLocation(shade->Program, "projection");
+		glUniformMatrix4fv(variableFov3, 1, GL_FALSE, value_ptr(projection));
+
+		
 		//definir la matriz de proyeccion
 		glMatrixMode(GL_PROJECTION);
 		glLoadIdentity();
@@ -296,8 +320,32 @@ int main() {
 		glBindTexture(GL_TEXTURE_2D, texture2);*/
 		shade->USE();
 		glBindVertexArray(VAO);
+
+		//CAMERA
+		vision = lookAt(cameraPosition, cameraPosition + cameraFront, cameraUp);
+
+		//manual
+		mat4 translated, rotation, rotationX, rotationY;
+		translated = translate(translated, CubesPositionBuffer[0]);
+		rotationX = rotate(rotationX, radians(angleX), vec3(1.0f, 0.0f, 0.0f));
+		rotationY = rotate(rotationY, radians(angleY), vec3(0.0f, 1.0f, 0.0f));
+		rotation = rotationX * rotationY;
+		model = translated * rotation;
+		glUniformMatrix4fv(glGetUniformLocation(shade->Program, "model"), 1, GL_FALSE, value_ptr(model));
 		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-		glDrawArrays(GL_TRIANGLES, 0,36);
+		glDrawArrays(GL_TRIANGLES, 0, 36);
+
+		//automatic
+		for (int i = 1; i < 10; i++) {
+			mat4 trans, rot;
+			trans = translate(trans, CubesPositionBuffer[i]);
+			rot = rotate(rot, (float)glfwGetTime()*radians(30.f), vec3(1.0f, 1.0f, 0.0f));
+			model = trans * rot;
+			glUniformMatrix4fv(glGetUniformLocation(shade->Program, "model"), 1, GL_FALSE, value_ptr(model));
+			glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+			glDrawArrays(GL_TRIANGLES, 0, 36);
+		}
+
 		//glBindVertexArray(0);
 
 
@@ -327,50 +375,71 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 		WIDEFRAME = !WIDEFRAME;
 		//cout << "pressed" << endl;
 	}
-	if (key == GLFW_KEY_UP)
-	{
-
-		mixed += 0.1;
-		if (mixed >= 1)
+	if (key == GLFW_KEY_1) {
+		if (mixed != 1) {
 			mixed = 1;
+		}
 		GLfloat variableShader = glGetUniformLocation(shade->Program, "mixed");
 		glUniform1f(variableShader, mixed);
-
+	}
+	else if (key == GLFW_KEY_2){
+		if (mixed != 0) {
+			mixed = 0;
+		}
+		GLfloat variableShader = glGetUniformLocation(shade->Program, "mixed");
+		glUniform1f(variableShader, mixed);
+	}
+	
+	if (key == GLFW_KEY_UP)
+	{
+		angleX += 2;
 		model = rotate(model, radians(5.0f), vec3(1.0f, 0.0f, 0.0f));
-		finalMatrix = proj * vision *model;
-		GLint variableRot = glGetUniformLocation(shade->Program, "finalMatrix");
-		glUniformMatrix4fv(variableRot, 1, GL_FALSE, value_ptr(finalMatrix));
+		
+		GLint variableRot = glGetUniformLocation(shade->Program, "model");
+		glUniformMatrix4fv(variableRot, 1, GL_FALSE, value_ptr(model));
 	}
 	else if (key == GLFW_KEY_DOWN)
 	{
-		mixed -= 0.1;
-		if (mixed <= 0)
-			mixed = 0;
-		GLfloat variableShader = glGetUniformLocation(shade->Program, "mixed");
-		glUniform1f(variableShader, mixed);
-
+		angleX -= 2;
 		model = rotate(model, radians(-5.0f), vec3(1.0f, 0.0f, 0.0f));
-		finalMatrix = proj * vision *model;
-		GLint variableRot = glGetUniformLocation(shade->Program, "finalMatrix");
-		glUniformMatrix4fv(variableRot, 1, GL_FALSE, value_ptr(finalMatrix));
+		
+		GLint variableRot = glGetUniformLocation(shade->Program, "model");
+		glUniformMatrix4fv(variableRot, 1, GL_FALSE, value_ptr(model));
 	}
 	if (key == GLFW_KEY_LEFT) 
 	{
+		angleY += 2;
 		//gir += radians(1.0f);
 		model = rotate(model, radians(5.0f), vec3(0.0f, 0.0f, 1.0f));
-		finalMatrix = proj * vision *model;
-		GLint variableRot = glGetUniformLocation(shade->Program, "finalMatrix");
-		glUniformMatrix4fv(variableRot, 1, GL_FALSE, value_ptr(finalMatrix));
+		
+		GLint variableRot = glGetUniformLocation(shade->Program, "model");
+		glUniformMatrix4fv(variableRot, 1, GL_FALSE, value_ptr(model));
 	}
 
 	else if(key == GLFW_KEY_RIGHT)
 	{
+		angleY -= 2;
 		//gir += radians(1.0f);
 		model = rotate(model, radians(-5.0f), vec3(0.0f, 0.0f, 1.0f));
-		finalMatrix = proj * vision *model;
-		GLint variableRot = glGetUniformLocation(shade->Program, "finalMatrix");
-		glUniformMatrix4fv(variableRot, 1, GL_FALSE, value_ptr(finalMatrix));
+		
+		GLint variableRot = glGetUniformLocation(shade->Program, "model");
+
+		glUniformMatrix4fv(variableRot, 1, GL_FALSE, value_ptr(model));
 	}
+	GLfloat cameraSpeed = 1.5f * dt;
+	if (key == GLFW_KEY_W) {
+		cameraPosition += cameraSpeed*cameraFront;
+	}
+	else if (key == GLFW_KEY_S) {
+		cameraPosition -= cameraSpeed*cameraFront;
+	}
+	if (key == GLFW_KEY_A) {
+		cameraPosition -= normalize(cross(cameraFront, cameraUp))*cameraSpeed;
+	}
+	else if (key == GLFW_KEY_D) {
+		cameraPosition += normalize(cross(cameraFront, cameraUp))*cameraSpeed;
+	}
+
 }
 
 

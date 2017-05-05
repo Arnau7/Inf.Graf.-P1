@@ -5,8 +5,10 @@ layout (location = 0) in vec3 position;
 layout (location = 1) in vec3 color;
 layout (location = 1) in vec2 texCoord;
 
-
 uniform mat4 finalMatrix;
+uniform mat4 projection;
+uniform mat4 vision;
+uniform mat4 model;
 
 out vec4 vertexColor;
 out vec2 TexCoord;
@@ -16,7 +18,7 @@ void main()
 	
 	gl_Position = vec4(position,1);
 	
-	gl_Position = finalMatrix * gl_Position;
+	gl_Position = projection * vision * model * gl_Position;
 	
 	
 	vertexColor = vec4(color,1.0f);
