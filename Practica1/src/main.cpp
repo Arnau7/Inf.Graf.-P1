@@ -45,7 +45,100 @@ vec3 cameraUp;
 GLfloat dt;
 GLfloat lastFrame;
 
+GLfloat yaw2 = -90.0f;
+GLfloat pitch2 = 0.0f;
+GLfloat lastX = WIDTH / 2.0;
+GLfloat lastY = HEIGHT / 2.0;
+GLfloat fov = 45.0f;
+bool keys[1024];
+
 Shader* shade;
+
+void do_movement()
+{
+	// Camera controls
+	GLfloat cameraSpeed = 1.5f * dt;
+	if (keys[GLFW_KEY_W])
+		cameraPosition += cameraSpeed * cameraFront;
+	if (keys[GLFW_KEY_S])
+		cameraPosition -= cameraSpeed * cameraFront;
+	if (keys[GLFW_KEY_A])
+		cameraPosition -= normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
+	if (keys[GLFW_KEY_D])
+		cameraPosition += normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
+	if (keys[GLFW_KEY_UP])
+	{
+		angleX += 2;
+		model = rotate(model, radians(5.0f), vec3(1.0f, 0.0f, 0.0f));
+
+		GLint variableRot = glGetUniformLocation(shade->Program, "model");
+		glUniformMatrix4fv(variableRot, 1, GL_FALSE, value_ptr(model));
+	}
+	else if (keys[GLFW_KEY_DOWN])
+	{
+		angleX -= 2;
+		model = rotate(model, radians(-5.0f), vec3(1.0f, 0.0f, 0.0f));
+
+		GLint variableRot = glGetUniformLocation(shade->Program, "model");
+		glUniformMatrix4fv(variableRot, 1, GL_FALSE, value_ptr(model));
+	}
+	if (keys[GLFW_KEY_LEFT])
+	{
+		angleY += 2;
+		//gir += radians(1.0f);
+		model = rotate(model, radians(5.0f), vec3(0.0f, 0.0f, 1.0f));
+
+		GLint variableRot = glGetUniformLocation(shade->Program, "model");
+		glUniformMatrix4fv(variableRot, 1, GL_FALSE, value_ptr(model));
+	}
+
+	else if (keys[GLFW_KEY_RIGHT])
+	{
+		angleY -= 2;
+		//gir += radians(1.0f);
+		model = rotate(model, radians(-5.0f), vec3(0.0f, 0.0f, 1.0f));
+
+		GLint variableRot = glGetUniformLocation(shade->Program, "model");
+
+		glUniformMatrix4fv(variableRot, 1, GL_FALSE, value_ptr(model));
+	}
+
+}
+bool firstMouse = true;
+
+void mouse_callback(GLFWwindow* window, double xpos, double ypos)
+{
+	if (firstMouse)
+	{
+		lastX = xpos;
+		lastY = ypos;
+		firstMouse = false;
+	}
+
+	GLfloat xoffset = xpos - lastX;
+	GLfloat yoffset = lastY - ypos; // Reversed since y-coordinates go from bottom to left
+	lastX = xpos;
+	lastY = ypos;
+
+	GLfloat sensitivity = 0.05;	// Change this value to your liking
+	xoffset *= sensitivity;
+	yoffset *= sensitivity;
+
+	yaw2 += xoffset;
+	pitch2 += yoffset;
+
+	// Make sure that when pitch is out of bounds, screen doesn't get flipped
+	if (pitch2 > 89.0f)
+		pitch2 = 89.0f;
+	if (pitch2 < -89.0f)
+		pitch2 = -89.0f;
+
+	vec3 front;
+	front.x = cos(radians(yaw2)) * cos(radians(pitch2));
+	front.y = sin(radians(pitch2));
+	front.z = sin(radians(yaw2)) * cos(radians(pitch2));
+	cameraFront = normalize(front);
+}
 
 
 int main() {
@@ -65,6 +158,9 @@ int main() {
 	//TODO
 	GLFWwindow* window = glfwCreateWindow(WIDTH, HEIGHT, "Window", nullptr, nullptr);
 	glfwMakeContextCurrent(window);
+
+	glfwSetKeyCallback(window, key_callback);
+	glfwSetCursorPosCallback(window, mouse_callback);
 
 	glewExperimental = GL_TRUE;
 	//set GLEW and inicializate
@@ -269,6 +365,8 @@ int main() {
 	//bucle de dibujado
 	while (!glfwWindowShouldClose(window))
 	{
+		glfwPollEvents();
+		do_movement();
 
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -353,7 +451,7 @@ int main() {
 		glBindVertexArray(0);
 		// Swap the screen buffers
 		glfwSwapBuffers(window);
-		glfwPollEvents();
+
 	}
 	// liberar la memoria de los VAO, EBO y VBO
 	glDeleteVertexArrays(1, &VAO);
@@ -389,45 +487,52 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 		GLfloat variableShader = glGetUniformLocation(shade->Program, "mixed");
 		glUniform1f(variableShader, mixed);
 	}
+	if (key >= 0 && key < 1024)
+	{
+		if (action == GLFW_PRESS)
+			keys[key] = true;
+		else if (action == GLFW_RELEASE)
+			keys[key] = false;
+	}
 	
-	if (key == GLFW_KEY_UP)
-	{
-		angleX += 2;
-		model = rotate(model, radians(5.0f), vec3(1.0f, 0.0f, 0.0f));
-		
-		GLint variableRot = glGetUniformLocation(shade->Program, "model");
-		glUniformMatrix4fv(variableRot, 1, GL_FALSE, value_ptr(model));
-	}
-	else if (key == GLFW_KEY_DOWN)
-	{
-		angleX -= 2;
-		model = rotate(model, radians(-5.0f), vec3(1.0f, 0.0f, 0.0f));
-		
-		GLint variableRot = glGetUniformLocation(shade->Program, "model");
-		glUniformMatrix4fv(variableRot, 1, GL_FALSE, value_ptr(model));
-	}
-	if (key == GLFW_KEY_LEFT) 
-	{
-		angleY += 2;
-		//gir += radians(1.0f);
-		model = rotate(model, radians(5.0f), vec3(0.0f, 0.0f, 1.0f));
-		
-		GLint variableRot = glGetUniformLocation(shade->Program, "model");
-		glUniformMatrix4fv(variableRot, 1, GL_FALSE, value_ptr(model));
-	}
+	//if (key == GLFW_KEY_UP)
+	//{
+	//	angleX += 2;
+	//	model = rotate(model, radians(5.0f), vec3(1.0f, 0.0f, 0.0f));
+	//	
+	//	GLint variableRot = glGetUniformLocation(shade->Program, "model");
+	//	glUniformMatrix4fv(variableRot, 1, GL_FALSE, value_ptr(model));
+	//}
+	//else if (key == GLFW_KEY_DOWN)
+	//{
+	//	angleX -= 2;
+	//	model = rotate(model, radians(-5.0f), vec3(1.0f, 0.0f, 0.0f));
+	//	
+	//	GLint variableRot = glGetUniformLocation(shade->Program, "model");
+	//	glUniformMatrix4fv(variableRot, 1, GL_FALSE, value_ptr(model));
+	//}
+	//if (key == GLFW_KEY_LEFT) 
+	//{
+	//	angleY += 2;
+	//	//gir += radians(1.0f);
+	//	model = rotate(model, radians(5.0f), vec3(0.0f, 0.0f, 1.0f));
+	//	
+	//	GLint variableRot = glGetUniformLocation(shade->Program, "model");
+	//	glUniformMatrix4fv(variableRot, 1, GL_FALSE, value_ptr(model));
+	//}
 
-	else if(key == GLFW_KEY_RIGHT)
-	{
-		angleY -= 2;
-		//gir += radians(1.0f);
-		model = rotate(model, radians(-5.0f), vec3(0.0f, 0.0f, 1.0f));
-		
-		GLint variableRot = glGetUniformLocation(shade->Program, "model");
+	//else if(key == GLFW_KEY_RIGHT)
+	//{
+	//	angleY -= 2;
+	//	//gir += radians(1.0f);
+	//	model = rotate(model, radians(-5.0f), vec3(0.0f, 0.0f, 1.0f));
+	//	
+	//	GLint variableRot = glGetUniformLocation(shade->Program, "model");
 
-		glUniformMatrix4fv(variableRot, 1, GL_FALSE, value_ptr(model));
-	}
-	GLfloat cameraSpeed = 1.5f * dt;
-	if (key == GLFW_KEY_W) {
+	//	glUniformMatrix4fv(variableRot, 1, GL_FALSE, value_ptr(model));
+	//}
+	
+	/*if (key == GLFW_KEY_W) {
 		cameraPosition += cameraSpeed*cameraFront;
 	}
 	else if (key == GLFW_KEY_S) {
@@ -438,8 +543,7 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 	}
 	else if (key == GLFW_KEY_D) {
 		cameraPosition += normalize(cross(cameraFront, cameraUp))*cameraSpeed;
-	}
+	}*/
 
 }
-
 
